@@ -17,6 +17,7 @@ internal class Program
 
         var builder = WebApplication.CreateBuilder(args);
         Configuration = builder.Configuration;
+        NewsDbContext.ConnectionString = Configuration.GetConnectionString("DbConnectionString");
         // Add services to the container.
         builder.Services.AddRazorPages();
         builder.Services.AddServerSideBlazor();
