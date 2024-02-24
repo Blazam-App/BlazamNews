@@ -1,9 +1,248 @@
 ﻿@page "/"
+@inject IDbContextFactory<NewsDbContext> Factory
+@inject ISnackbar SnackbarService
+@inject IDialogService DialogService
+@if (Context != null)
+{
+    <MudDataGrid ReadOnly=false
+                 Filterable=true
+                 EditMode=DataGridEditMode.Form
+                 Dense=true
+                 RowStyleFunc="@((item,index)=>{return  item.ExpiresAt<DateTime.Now?"background-color:red;":"";})"
+                 CommittedItemChanges="@((NewsItem item)=>{CommittedItemChanges(item);})"
+                 Items="@NewsItems">
+        <Columns>
+            <TemplateColumn Title="Preview">
+                <CellTemplate>
+                    <MudIcon Icon="@Icons.Material.Filled.Preview" onclick="@(()=>{ShowPreview(context.Item);})" />
+                </CellTemplate>
+            </TemplateColumn>
+            <PropertyColumn Sortable=true Property="x=>x.Published">
+                <EditTemplate>
+                    <MudCheckBox Label="Published" @bind-Value=context.Item.Published />
+                </EditTemplate>
+            </PropertyColumn>
+            <PropertyColumn Sortable=true Property="x=>x.DevOnly">
+                <EditTemplate>
+                    <MudCheckBox Label="DevOnly" @bind-Value=context.Item.DevOnly />
+                </EditTemplate>
+            </PropertyColumn>
+            <PropertyColumn Sortable=true Property="x=>x.Title" />
+            <TemplateColumn Sortable="true" Title="Body">
+                <CellTemplate>
+                    @((MarkupString)context.Item.Body)
+                </CellTemplate>
+                <EditTemplate>
+                    <MudTextField AutoFocus=true AutoGrow=true Label="Body" Immediate=true @bind-Value=@context.Item.Body />
+                    <MudCard>
+                        <MudCardHeader>
+                            Body Preview
+                        </MudCardHeader>
+                        <MudCardContent>
+                            @((MarkupString)context.Item.Body)
+                        </MudCardContent>
+                    </MudCard>
+                </EditTemplate>
+            </TemplateColumn>
+            <PropertyColumn Sortable=true Property="x=>x.CreatedAt" />
+            <PropertyColumn Sortable=true Property="x=>x.UpdatedAt" />
+            <PropertyColumn Required=false Sortable=true Property="x=>x.ExpiresAt">
+                <EditTemplate>
+                    <MudDatePicker Required=false @bind-Date="context.Item.ExpiresAt" Margin="@Margin.Dense" />
+                </EditTemplate>
+            </PropertyColumn>
+            <TemplateColumn Required=false Title="Link">
+                <CellTemplate>
+                    <MudLink Target="_blank" Href="@context.Item.Link">@context.Item.Link</MudLink>
+                </CellTemplate>
+                <EditTemplate>
+                    <MudTextField Label="Link" @bind-Value="@context.Item.Link" />
+                </EditTemplate>
+            </TemplateColumn>
+            <TemplateColumn Title="Icon">
+                <CellTemplate>
+                    @if (context.Item.Icon != null)
+                    {
+                        <Base64Image Data="@context.Item.Icon.ResizeRawImage(50)" />
 
-<PageTitle>Index</PageTitle>
+                    }
+                </CellTemplate>
+                <EditTemplate>
+                    @if (context.Item.Icon != null)
+                    {
+                        <Base64Image Data="@context.Item.Icon.ResizeRawImage(50)" />
+                        <MudButton OnClick="@(()=>{RemoveIcon(context.Item);})">Remove Icon</MudButton>
+                    }
+                    <MudFileUpload Context="fileContext" T="IBrowserFile" FilesChanged="((file)=>{LoadIcon(file,context.Item);})">
+                        <ButtonTemplate>
+                            <MudButton HtmlTag="label"
+                                       Variant="Variant.Filled"
+                                       Color="Color.Primary"
+                                       StartIcon="@Icons.Material.Filled.CloudUpload"
+                                       for=@fileContext.Id>
+                                Upload Icon
+                            </MudButton>
+                        </ButtonTemplate>
+                    </MudFileUpload>
+                </EditTemplate>
+            </TemplateColumn>
+            <TemplateColumn Title="Actions"
+                            Sortable=false
+                            Filterable=false
+                            Hidden="@false"
+                            CellClass="d-flex justify-end">
+                <CellTemplate>
+                    <MudIconButton Size="@Size.Small"
+                                   Icon="@Icons.Material.Outlined.Edit"
+                                   OnClick="@context.Actions.StartEditingItemAsync" />
+                    <MudIconButton Size="@Size.Small"
+                                   Icon="@Icons.Material.Outlined.Delete"
+                                   OnClick="@(()=>{RemoveItem(context.Item);})" />
+                </CellTemplate>
+            </TemplateColumn>
 
-<h1>Hello, world!</h1>
+        </Columns>
+    </MudDataGrid>
+    <MudStack Style="max-width:500px;">
+        <MudTextField Required=true Label="Title" @bind-Value=newItem.Title />
 
-Welcome to your new app.
+        <MudDatePicker Label="ExpiresAt" @bind-Value=newItem.ExpiresAt />
+        <MudTextField Label="Link" @bind-Value=newItem.Link />
+        <MudTextField Immediate=true AutoGrow=true Label="Description" @bind-Value=newItem.Body />
+        <MudCard>
+            <MudCardHeader>
+                Body Preview
+            </MudCardHeader>
+            <MudCardContent>
+                @((MarkupString)newItem.Body)
+            </MudCardContent>
+        </MudCard>
+        <MudFab OnClick=@SaveNewItem StartIcon="@Icons.Material.Filled.Add" />
 
-<SurveyPrompt Title="How is Blazor working for you?" />
+    </MudStack>
+}
+
+@code {
+    private NewsItem newItem = new();
+    private NewsDbContext Context;
+    private List<NewsItem> NewsItems = new();
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        Context = await Factory.CreateDbContextAsync();
+
+        if (Context.Database.ProviderName!="Microsoft.EntityFrameworkCore.InMemory" && (await Context.Database.GetPendingMigrationsAsync()).Count() > 0)
+        {
+            await Context.Database.MigrateAsync();
+        }
+
+
+        await RefreshItems();
+    }
+    private async Task ShowPreview(NewsItem item)
+    {
+        var param = new DialogParameters<NewsItemPreview>();
+        param.Add("Item", item);
+        var options = new DialogOptions();
+        options.CloseButton = true;
+        options.FullWidth = true;
+        options.FullScreen = true;
+        DialogService.Show<NewsItemPreview>(item.Title, param, options);
+    }
+    private async Task RefreshItems()
+    {
+        NewsItems = await Context.NewsItems.Where(x => x.DeletedAt == null).ToListAsync();
+        await InvokeAsync(StateHasChanged);
+    }
+    private async Task SaveNewItem()
+    {
+        if (newItem.Title != null)
+        {
+            newItem.CreatedAt = DateTime.Now;
+            newItem.UpdatedAt = newItem.CreatedAt;
+
+            Context.NewsItems.Add(newItem);
+            if (await Context.SaveChangesAsync() > 0)
+            {
+                newItem = new();
+                await RefreshItems();
+
+
+            }
+        }
+    }
+    private async Task RemoveItem(NewsItem item)
+    {
+        NewsItems.Remove(item);
+        var matching = Context.NewsItems.FirstOrDefault(x => x.Id == item.Id);
+        if (matching != null)
+        {
+            matching.DeletedAt = DateTime.Now;
+            if (await Context.SaveChangesAsync() > 0)
+            {
+                SnackbarService.Add("Item removed");
+            }
+        }
+        await InvokeAsync(StateHasChanged);
+    }
+    private async Task CommittedItemChanges(NewsItem item)
+    {
+        var matching = Context.NewsItems.FirstOrDefault(x => x.Id == item.Id);
+        if (matching != null)
+        {
+            matching.CopyFrom(item);
+            matching.UpdatedAt = DateTime.Now;
+
+            if (await Context.SaveChangesAsync() > 0)
+            {
+                //await RefreshItems();
+                SnackbarService.Add("Changes have been saved");
+            }
+        }
+    }
+    private async void LoadIcon(IBrowserFile e, NewsItem item)
+    {
+        byte[] fileBytes;
+        using (var stream = e.OpenReadStream(5000000))
+        {
+            using (var memoryStream = new MemoryStream())
+            {
+                await stream.CopyToAsync(memoryStream);
+                fileBytes = memoryStream.ToArray();
+            }
+        }
+        var bytes = await e.ToByteArrayAsync(5000000);
+        item.Icon = bytes;
+        var matching = Context.NewsItems.FirstOrDefault(x => x.Id == item.Id);
+        if (matching != null)
+        {
+            matching.Icon = bytes;
+            if (await Context.SaveChangesAsync() > 0)
+            {
+                SnackbarService.Add("Icon uploaded");
+            }
+        }
+        //await Context.SaveChangesAsync();
+        await InvokeAsync(StateHasChanged);
+
+
+    }
+    private async void RemoveIcon(NewsItem item)
+    {
+        item.Icon = null;
+        var matching = Context.NewsItems.FirstOrDefault(x => x.Id == item.Id);
+        if (matching != null)
+        {
+            matching.Icon = null;
+            if (await Context.SaveChangesAsync() > 0)
+            {
+                SnackbarService.Add("Icon removed");
+            }
+        }
+        //await Context.SaveChangesAsync();
+        await InvokeAsync(StateHasChanged);
+    }
+
+
+}
+
