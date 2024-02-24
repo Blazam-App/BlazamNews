@@ -27,7 +27,7 @@ namespace ApplicationNews
             }
             else
             {
-                optionsBuilder.UseMySql("Database=localdb;Data Source=127.0.0.1;User Id=azure;Password=6#vWHD_$", serverVersion: new MySqlServerVersion(new Version(8, 0, 32)),
+                optionsBuilder.UseMySql("Database=localdb;Data Source=127.0.0.1:54097;User Id=azure;Password=6#vWHD_$", serverVersion: new MySqlServerVersion(new Version(8, 0, 32)),
                                   mySqlOptionsAction: options =>
                                   {
                                       options.EnableRetryOnFailure();
