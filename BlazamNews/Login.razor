@@ -1,6 +1,7 @@
 @page "/login"
 @inject ISnackbar SnackBarService
 @inject NavigationManager Nav
+@inject IDbContextFactory<NewsDbContext> Factory
 @inject IJSRuntime JSRuntime
 @if (attemptingSignIn)
 {
@@ -67,7 +68,15 @@
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
-       
+        var Context = await Factory.CreateDbContextAsync();
+
+        if (Context.Database.ProviderName != "Microsoft.EntityFrameworkCore.InMemory")
+        {
+            if ((await Context.Database.GetPendingMigrationsAsync()).Count() > 0)
+            {
+                await Context.Database.MigrateAsync();
+            }
+        }
     }
 
    
