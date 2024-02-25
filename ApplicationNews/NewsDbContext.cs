@@ -27,7 +27,7 @@ namespace ApplicationNews
             }
             else
             {
-                if (ConnectionString == null) throw new ApplicationException("ConnectionString is empty. Unable to connect to database!");
+                //if (ConnectionString == null) throw new ApplicationException("ConnectionString is empty. Unable to connect to database!");
                 optionsBuilder.UseSqlServer(ConnectionString, options =>
                                   {
                                       options.EnableRetryOnFailure();
