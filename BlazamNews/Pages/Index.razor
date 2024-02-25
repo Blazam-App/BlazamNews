@@ -2,6 +2,7 @@
 @inject IDbContextFactory<NewsDbContext> Factory
 @inject ISnackbar SnackbarService
 @inject IDialogService DialogService
+
 @if (Context != null)
 {
     <MudDataGrid ReadOnly=false
@@ -48,7 +49,12 @@
             <PropertyColumn Sortable=true Property="x=>x.UpdatedAt" />
             <PropertyColumn Required=false Sortable=true Property="x=>x.ExpiresAt">
                 <EditTemplate>
-                    <MudDatePicker Required=false @bind-Date="context.Item.ExpiresAt" Margin="@Margin.Dense" />
+                    <MudDatePicker Label="Expiration Date" MinDate=DateTime.Now Clearable=true Required=false @bind-Date="context.Item.ExpiresAt" Margin="@Margin.Dense" />
+                </EditTemplate>
+            </PropertyColumn>
+            <PropertyColumn Required=false Sortable=true Property="x=>x.ScheduledAt">
+                <EditTemplate>
+                    <MudDatePicker Label="Scheduled Start" MinDate=DateTime.Now Clearable=true Required=false @bind-Date="context.Item.ScheduledAt" Margin="@Margin.Dense" />
                 </EditTemplate>
             </PropertyColumn>
             <TemplateColumn Required=false Title="Link">
@@ -105,10 +111,9 @@
     </MudDataGrid>
     <MudStack Style="max-width:500px;">
         <MudTextField Required=true Label="Title" @bind-Value=newItem.Title />
-
-        <MudDatePicker Label="ExpiresAt" @bind-Value=newItem.ExpiresAt />
+        <MudDateRangePicker MinDate=DateTime.Now Clearable=true Label="Scheduled Run Time" DateRangeChanged="DateRangeSelected" DateRange="ScheduleExpirationRange" />
         <MudTextField Label="Link" @bind-Value=newItem.Link />
-        <MudTextField Immediate=true AutoGrow=true Label="Description" @bind-Value=newItem.Body />
+        <MudTextField Immediate=true AutoGrow=true Label="Body" @bind-Value=newItem.Body />
         <MudCard>
             <MudCardHeader>
                 Body Preview
@@ -117,12 +122,26 @@
                 @((MarkupString)newItem.Body)
             </MudCardContent>
         </MudCard>
-        <MudFab OnClick=@SaveNewItem StartIcon="@Icons.Material.Filled.Add" />
+        <MudFab OnClick=@(()=>{SaveNewItem();}) StartIcon="@Icons.Material.Filled.Add" />
+        <MudFab OnClick=@(()=>{SaveNewItem(true);}) StartIcon="@Icons.Material.Filled.Publish" />
 
     </MudStack>
 }
 
 @code {
+    private DateTime MinimumExpirationDate
+    {
+        get
+
+        {
+            if (newItem.ScheduledAt == null) return DateTime.Now;
+            if (newItem.ScheduledAt > DateTime.Now) return newItem.ScheduledAt.Value;
+            return DateTime.Now;
+
+        }
+    }
+
+    private DateRange ScheduleExpirationRange => new DateRange(newItem.ScheduledAt, newItem.ExpiresAt);
     private NewsItem newItem = new();
     private NewsDbContext Context;
     private List<NewsItem> NewsItems = new();
@@ -131,9 +150,12 @@
         await base.OnInitializedAsync();
         Context = await Factory.CreateDbContextAsync();
 
-        if (Context.Database.ProviderName!="Microsoft.EntityFrameworkCore.InMemory" && (await Context.Database.GetPendingMigrationsAsync()).Count() > 0)
+        if (Context.Database.ProviderName != "Microsoft.EntityFrameworkCore.InMemory")
         {
-            await Context.Database.MigrateAsync();
+            if ((await Context.Database.GetPendingMigrationsAsync()).Count() > 0)
+            {
+                await Context.Database.MigrateAsync();
+            }
         }
 
 
@@ -154,13 +176,18 @@
         NewsItems = await Context.NewsItems.Where(x => x.DeletedAt == null).ToListAsync();
         await InvokeAsync(StateHasChanged);
     }
-    private async Task SaveNewItem()
+    private void DateRangeSelected(DateRange range)
+    {
+        newItem.ScheduledAt = range.Start;
+        newItem.ExpiresAt = range.End;
+    }
+    private async Task SaveNewItem(bool publish = false)
     {
         if (newItem.Title != null)
         {
             newItem.CreatedAt = DateTime.Now;
             newItem.UpdatedAt = newItem.CreatedAt;
-
+            newItem.Published = publish;
             Context.NewsItems.Add(newItem);
             if (await Context.SaveChangesAsync() > 0)
             {

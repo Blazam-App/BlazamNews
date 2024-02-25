@@ -44,9 +44,12 @@ internal class Program
         app.UseStaticFiles();
         
         app.UseRouting();
-
-        app.MapBlazorHub();
-        app.MapFallbackToPage("/_Host");
+        app.UseEndpoints(endpoints =>
+        {
+            endpoints.MapControllers();
+            endpoints.MapBlazorHub();
+            endpoints.MapFallbackToPage("/_Host");
+        });
         
         app.Run();
     }
