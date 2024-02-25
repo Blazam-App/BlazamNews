@@ -111,7 +111,7 @@
     </MudDataGrid>
     <MudStack Style="max-width:500px;">
         <MudTextField Required=true Label="Title" @bind-Value=newItem.Title />
-        <MudDateRangePicker MinDate=DateTime.Now Clearable=true Label="Scheduled Run Time" DateRangeChanged="DateRangeSelected" DateRange="ScheduleExpirationRange" />
+        <MudDateRangePicker MinDate=@(DateTime.Now-TimeSpan.FromDays(1)) Clearable=true Label="Scheduled Run Time" DateRangeChanged="DateRangeSelected" DateRange="ScheduleExpirationRange" />
         <MudTextField Label="Link" @bind-Value=newItem.Link />
         <MudTextField Immediate=true AutoGrow=true Label="Body" @bind-Value=newItem.Body />
         <MudCard>
