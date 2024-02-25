@@ -7,6 +7,8 @@ using System.Diagnostics;
 using MudBlazor.Services;
 using BlazamNews.Pages.API;
 using ApplicationNews;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using BlazamNews;
 
 
 internal class Program
@@ -20,11 +22,21 @@ internal class Program
         NewsDbContext.ConnectionString = Configuration.GetConnectionString("DbConnectionString");
         // Add services to the container.
         builder.Services.AddRazorPages();
+        builder.Services.AddHttpContextAccessor();
         builder.Services.AddServerSideBlazor();
         builder.Services.AddMudServices();
         builder.Services.AddMudBlazorSnackbar();
-        builder.Services.AddSingleton<WeatherForecastService>();
-       
+        builder.Services.AddScoped<AppAuthenticationStateProvider>();
+        //Set up authentication and api token authentication
+        builder.Services.Configure<CookiePolicyOptions>(options =>
+        {
+            options.CheckConsentNeeded = context => true;
+            options.MinimumSameSitePolicy = SameSiteMode.None;
+        });
+        builder.Services.AddAuthentication(
+            CookieAuthenticationDefaults.AuthenticationScheme)
+            .AddCookie(AppAuthenticationStateProvider.ApplyAuthenticationCookieOptions());
+
         //var factory = new NewsDatabaseContextFactory(options.Options);
         //builder.Services.AddSingleton<NewsDatabaseContextFactory>(factory);
         builder.Services.AddDbContextFactory<NewsDbContext>();
@@ -44,6 +56,9 @@ internal class Program
         app.UseStaticFiles();
         
         app.UseRouting();
+
+        app.UseAuthentication();
+        app.UseAuthorization();
         app.UseEndpoints(endpoints =>
         {
             endpoints.MapControllers();

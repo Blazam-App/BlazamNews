@@ -18,6 +18,7 @@ namespace ApplicationNews
            
         }
         public DbSet<NewsItem> NewsItems { get; set; }
+        public DbSet<Settings> Settings{ get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

@@ -2,7 +2,7 @@
 @inject IDbContextFactory<NewsDbContext> Factory
 @inject ISnackbar SnackbarService
 @inject IDialogService DialogService
-
+@attribute [Authorize]
 @if (Context != null)
 {
     <MudDataGrid ReadOnly=false
