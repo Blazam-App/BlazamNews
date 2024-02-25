@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ApplicationNews.Migrations
 {
     [DbContext(typeof(NewsDbContext))]
-    [Migration("20240224205754_Seed")]
+    [Migration("20240225145838_Seed")]
     partial class Seed
     {
         /// <inheritdoc />
@@ -20,18 +20,15 @@ namespace ApplicationNews.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.2")
+                .HasAnnotation("ProductVersion", "7.0.16")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
             modelBuilder.Entity("ApplicationNews.NewsItem", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    b.Property<double>("Id")
+                        .HasColumnType("float");
 
                     b.Property<string>("Body")
                         .HasColumnType("nvarchar(max)");
