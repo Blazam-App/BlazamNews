@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ApplicationNews.Migrations
 {
     [DbContext(typeof(NewsDbContext))]
-    [Migration("20240225184351_Add_Settings")]
-    partial class Add_Settings
+    [Migration("20240225223233_Seed")]
+    partial class Seed
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -27,8 +27,11 @@ namespace ApplicationNews.Migrations
 
             modelBuilder.Entity("ApplicationNews.NewsItem", b =>
                 {
-                    b.Property<double>("Id")
-                        .HasColumnType("float");
+                    b.Property<decimal>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("decimal(20,0)");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<decimal>("Id"));
 
                     b.Property<string>("Body")
                         .HasColumnType("nvarchar(max)");

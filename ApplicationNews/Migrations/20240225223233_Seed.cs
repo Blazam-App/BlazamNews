@@ -15,7 +15,8 @@ namespace ApplicationNews.Migrations
                 name: "NewsItems",
                 columns: table => new
                 {
-                    Id = table.Column<double>(type: "float", nullable: false),
+                    Id = table.Column<decimal>(type: "decimal(20,0)", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
                     Title = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Body = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
@@ -32,6 +33,18 @@ namespace ApplicationNews.Migrations
                 {
                     table.PrimaryKey("PK_NewsItems", x => x.Id);
                 });
+
+            migrationBuilder.CreateTable(
+                name: "Settings",
+                columns: table => new
+                {
+                    Id = table.Column<double>(type: "float", nullable: false),
+                    AdminPassword = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Settings", x => x.Id);
+                });
         }
 
         /// <inheritdoc />
@@ -39,6 +52,9 @@ namespace ApplicationNews.Migrations
         {
             migrationBuilder.DropTable(
                 name: "NewsItems");
+
+            migrationBuilder.DropTable(
+                name: "Settings");
         }
     }
 }

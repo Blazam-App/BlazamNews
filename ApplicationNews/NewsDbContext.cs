@@ -1,6 +1,7 @@
 ﻿using ApplicationNews;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics;
 
 namespace ApplicationNews
@@ -40,7 +41,9 @@ namespace ApplicationNews
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-
+            modelBuilder.Entity<NewsItem>(entity =>
+            {
+            });
         }
     }
 }

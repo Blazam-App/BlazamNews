@@ -24,8 +24,11 @@ namespace ApplicationNews.Migrations
 
             modelBuilder.Entity("ApplicationNews.NewsItem", b =>
                 {
-                    b.Property<double>("Id")
-                        .HasColumnType("float");
+                    b.Property<decimal>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("decimal(20,0)");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<decimal>("Id"));
 
                     b.Property<string>("Body")
                         .HasColumnType("nvarchar(max)");

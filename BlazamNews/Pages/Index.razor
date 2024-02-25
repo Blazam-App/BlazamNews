@@ -183,19 +183,27 @@
     }
     private async Task SaveNewItem(bool publish = false)
     {
-        if (newItem.Title != null)
-        {
-            newItem.CreatedAt = DateTime.Now;
-            newItem.UpdatedAt = newItem.CreatedAt;
-            newItem.Published = publish;
-            Context.NewsItems.Add(newItem);
-            if (await Context.SaveChangesAsync() > 0)
+        try{
+            if (newItem.Title != null)
             {
-                newItem = new();
-                await RefreshItems();
+                newItem.CreatedAt = DateTime.Now;
+                newItem.UpdatedAt = newItem.CreatedAt;
+                newItem.Published = publish;
+                Context.NewsItems.Add(newItem);
+                if (await Context.SaveChangesAsync() > 0)
+                {
+                    newItem = new();
+                    await RefreshItems();
 
 
+                }
+                else{
+                    SnackbarService.Add("Could not save changes", Severity.Warning);
+                }
             }
+        }catch(Exception ex)
+        {
+          SnackbarService.Add(ex.Message,Severity.Error);
         }
     }
     private async Task RemoveItem(NewsItem item)

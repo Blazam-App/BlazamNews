@@ -1,4 +1,6 @@
-﻿using System.Reflection.PortableExecutable;
+﻿using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations;
+using System.Reflection.PortableExecutable;
 
 namespace ApplicationNews
 {
@@ -7,7 +9,8 @@ namespace ApplicationNews
     /// </summary>
     public class NewsItem
     {
-        public double Id { get; set; }
+        [Key]
+        public ulong Id { get; set; }
         /// <summary>
         /// The title of the news
         /// </summary>
