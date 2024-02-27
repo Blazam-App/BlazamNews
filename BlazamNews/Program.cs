@@ -24,12 +24,22 @@ internal class Program
         builder.Services.AddRazorPages();
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddServerSideBlazor();
-        builder.Services.AddMudServices();
+        builder.Services.AddMudServices(configuration =>
+
+        {
+            configuration.SnackbarConfiguration.PreventDuplicates = false;
+            configuration.SnackbarConfiguration.MaxDisplayedSnackbars = 20;
+            configuration.SnackbarConfiguration.HideTransitionDuration = 150;
+            configuration.SnackbarConfiguration.ShowTransitionDuration = 150;
+
+        }
+        );
         builder.Services.AddMudBlazorSnackbar();
         builder.Services.AddScoped<AppAuthenticationStateProvider>();
         //Set up authentication and api token authentication
         builder.Services.Configure<CookiePolicyOptions>(options =>
         {
+
             options.CheckConsentNeeded = context => true;
             options.MinimumSameSitePolicy = SameSiteMode.None;
         });
@@ -52,9 +62,9 @@ internal class Program
         }
 
         app.UseHttpsRedirection();
-        
+
         app.UseStaticFiles();
-        
+
         app.UseRouting();
 
         app.UseAuthentication();
@@ -65,7 +75,7 @@ internal class Program
             endpoints.MapBlazorHub();
             endpoints.MapFallbackToPage("/_Host");
         });
-        
+
         app.Run();
     }
 }

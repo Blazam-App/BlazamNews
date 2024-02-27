@@ -9,7 +9,7 @@ namespace BlazamNews
 {
     public class AppAuthenticationStateProvider:AuthenticationStateProvider
     {
-        public static int SessionTimeout { get; set; } = 1;
+        public static int SessionTimeout { get; set; } = 15;
         public AppAuthenticationStateProvider(IHttpContextAccessor ca,IDbContextFactory<NewsDbContext> con)
         {
            
